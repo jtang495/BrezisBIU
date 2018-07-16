@@ -1,0 +1,426 @@
+---
+title: "part 2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+#creates the T and I values of the 30 referees
+t_vals = c(50,30,30,40,40,40,50,50,60,70,80,90,20,30,40,50,20,60,70,80,60,50,60,40,50,80,30,90,70,50)
+i_vals = c(60,50,20,20,30,30,50,40,40,40,50,50,50,50,60,70,80,90,90,100,50,30,40,50,60,60,50,80,50,70)
+#t_vals = rep(100, 30)
+# i_vals = rep(100, 30)
+
+#visualize distribution of i and t values for set of 30 referees
+plot(t_vals, i_vals)
+hist(t_vals, breaks=10, main = "T Values")
+hist(i_vals, breaks=15, main = "I Values")
+
+#exports the referee T and I values in a table
+referee_values <- data.frame(t_vals, i_vals)
+View(referee_values)
+write.csv(referee_values, file="referee_values.csv")
+
+#visualize distribution of automatically generated i values
+set.seed(1) #GENERIC SEED
+ii <- rexp(n=100, rate=.9) * 20
+ii <- round(ii, digits=0)
+hist(ii, 
+     xlim = c(0, 100), 
+     probability = TRUE, 
+     nclass = max(ii) - min(ii) + 1, 
+     col = 'lightblue',
+     main = 'Distribution of I')
+
+x2 <- runif(100, 0.0, 1.0)
+
+#below code generates visualizations of C and S with set seeds for reproducibility
+n <- 100
+mean <- 45
+sd <- 15
+set.seed(21) #GENERIC SEED 21-23
+s <- rnorm(n, mean, sd)
+hist(s, 
+     xlim = c(0, 100), 
+     probability = TRUE, 
+     nclass = max(s) - min(s) + 1, 
+     col = 'lightblue',
+     main = 'Distribution of S')
+
+mean <- 45
+set.seed(36) #GENERIC SEED 34-36
+c <- rnorm(n, mean, sd)
+hist(c, 
+     xlim = c(0, 100), 
+     probability = TRUE, 
+     nclass = max(c) - min(c) + 1, 
+     col = 'lightblue',
+     main = 'Distribution of C')
+
+#visualize ECDF of S and C
+p <- ecdf(s)
+plot(p)
+z <- ecdf(c)
+plot(z)
+
+#data frame of c, s, i  values
+s_c_i = data.frame(round(s), round(c), ii)
+
+#calculates v for each coefficient
+one_third <- (1/4*s+3/8*c+3/8*ii) #coeff 1
+#one_third <- (1/2*s+1/4*c+1/4*ii)
+#one_third <- (1/5*s+1/5*c+3/5*ii)
+#one_third <- (1/3*s+1/3*c+1/3*ii) #coeff 1
+three_fourth_1 <- (3/4*s+1/8*c+1/8*ii) #coeff 2
+three_fourth_2 <- (1/8*s+3/4*c+1/8*ii) #coeff 3
+three_fourth_3 <- (1/8*s+1/8*c+3/4*ii)#coeff 4
+one_sixth <- (1/6*s+2/3*c+1/6*ii)#coeff 5
+
+#data frame of five coefficient combinations (v values)
+a_b_g = data.frame(round(one_third), round(three_fourth_1), round(three_fourth_2), round(three_fourth_3), round(one_sixth))
+
+#first few columns (c, s, and i values + the v values for 5 sets of coefficients)
+my_db = cbind(s_c_i, a_b_g)
+names(my_db) <- c("s", "c", "ii", "one_third", "three_fourth_1", "three_fourth_2", "three_fourth_3", "one_sixth")
+
+referee_papers <- c(1:100)
+July2 = s_c_i
+July3 = c(rep(NA,15))
+
+generate_table <- function (seed_num) {
+  #seed_num = seed_num + 1
+  
+  #!!!when switching from by 10 to by 100 change at lines 83-102, 114-115, and 117-126!!!
+
+  referees_set = c()
+  #generates random referees
+  # referees = 1:30;
+  # set.seed(seed_num) #GENERIC SEED previous - 6 - 10 - 15 - 21:27
+  # referees_set = sample(referees,length(referees))
+  # View(referees_set)
+ #6 for seed-num is an algorithmic anomaly if the additive by round is 1 
+  set.seed(seed_num)
+  seed_array <- sample(1:500:500)
+  View(seed_array)
+  seed_counter = 1
+  referees = c(rep(1:30,10));
+  while(length(referees) > 0){
+    valid = FALSE
+    while(!valid){
+   #GENERIC SEED previous - 6 - 10 - 15 - 21:27
+      # seed_num = seed_num + 3 #this fixes the anomaly of seed generation #3, 6 11, 12?
+      # print(seed_num)
+      # set.seed(seed_num)
+      set.seed(seed_array[seed_counter])
+      seed_counter = seed_counter + 1
+      print(seed_counter)
+
+      sample_three = sample(1:length(referees),3) #gets three indexes are tries as a possible commitee
+      if((referees[sample_three[2]] != referees[sample_three[3]]) && (referees[sample_three[1]] != referees[sample_three[3]]) && (referees[sample_three[1]] != referees[sample_three[2]])){
+        valid = TRUE
+      } else {
+        print("not working")
+        print(referees[sample_three])
+      }
+    }
+    #print(referees_set)
+    referees_set = c(referees_set, referees[sample_three[1]], referees[sample_three[2]], referees[sample_three[3]]) #adds the indexes of a commitee
+    referees <- referees[-sample_three] #removes these potential values from the remaining referees
+  }
+  View(referees_set)
+  #creates first default column of new dataframe
+  result_df = data.frame(rep(NA, 100))
+  
+  for(rep in 1:5){ #each rep is a new set of coefficients
+  
+    referee_df_1 = data.frame(rep(NA, 100)) #basically each "referee_df_1" is the values with a set of coefficients
+    
+    for(i in 1:3){ #iterates through 3 column sets of unique referees #!!!!!!!!0:2 FOR BY 10!!!!!!!! 1:3 FOR BY 100
+      t_col = c()
+      i_col = c()
+      u_col = c()
+      name_col = c()
+      
+      # for(n in 1:10){ #iterates through each set of 10 papers for each committee
+      #   t_col = c(t_col, rep(t_vals[referees_set[i*10 + n]], 10))
+      #   i_col = c(i_col, rep(i_vals[referees_set[i*10 + n]], 10))
+      #   name_col = c(name_col, rep(referees_set[i*10 + n],10))
+      # }
+      for(n in 0:99){ #iterates through each set of 10 papers for each committee
+        t_col = c(t_col, t_vals[referees_set[i + n*3]])
+        i_col = c(i_col, i_vals[referees_set[i + n*3]])
+        name_col = c(name_col, referees_set[i + n*3])
+      }
+      
+      
+      for(d in 1:100){
+    
+        if(my_db$c[d] > t_col[d]){ #conditional check to get correct C and I values based on respective referee
+          C = t_col[d]
+        } else {
+          C = my_db$c[d]
+        }
+        if(my_db$ii[d] > i_col[d]){
+          I = i_col[d]
+        } else {
+          I = my_db$ii[d]
+        }
+        
+        if(rep == 1){  #calculates the u_col for each individual reviewer (altogether 3)
+          u_col =  c(u_col, (my_db$s[d]*1/4+C*3/8+I*3/8))#c(u_col, (my_db$s[d]*1/2+C*1/4+I*1/4))#c(u_col, (my_db$s[d]*1/5+C*1/5+I*3/5)) #c(u_col, (my_db$s[d]*1/3+C*1/3+I*1/3))
+        } else if (rep == 2){
+          u_col = c(u_col, (my_db$s[d]*3/4+C*1/8+I*1/8))
+        } else if (rep == 3){
+          u_col = c(u_col, (my_db$s[d]*1/8+C*3/4+I*1/8))
+        } else if (rep == 4){
+          u_col = c(u_col, (my_db$s[d]*1/8+C*1/8+I*3/4))
+        } else if (rep == 5){
+          u_col = c(u_col, (my_db$s[d]*1/6+C*2/3+I*1/6))
+        }
+        
+      }
+      if(rep == 1) {
+        referee_papers <<- cbind(referee_papers, data.frame(name_col))
+        View(referee_papers)
+        write.csv(referee_papers, file="Distribution of Referees.csv")      
+      }
+      
+      
+      referee_df_1 <- cbind(referee_df_1, data.frame(c(name_col)))
+      
+      referee_df_1 <- cbind(referee_df_1, data.frame(c(t_col)))
+      referee_df_1 <- cbind(referee_df_1, data.frame(c(i_col)))
+      
+      referee_df_1 <- cbind(referee_df_1, data.frame(c(u_col)))
+    
+    }
+    referee_df_1[1] = NULL #deletes the initial NA placeholder
+    names(referee_df_1) = c("ref1", "t1", "i1", "u1", "ref2", "t2", "i2", "u2", "ref3", "t3", "i3", "u3") #gives names
+    referee_df_1 <- cbind(referee_df_1, data.frame(((referee_df_1$u1 + referee_df_1$u2 + referee_df_1$u3)/3), ((referee_df_1$u1 + referee_df_1$u2)/2), ((referee_df_1$u2 + referee_df_1$u3)/2), ((referee_df_1$u1 + referee_df_1$u3)/2))) #calculates average for each set of 3
+    if(rep == 1){ #adds ideal v values of data frame
+      referee_df_1 <- cbind(data.frame(one_third), referee_df_1)
+      View(referee_df_1)
+      
+      names = c("v", "ref1", "t1", "i1", "u1", "ref2", "t2", "i2", "u2", "ref3", "t3", "i3", "u3", "avg", "avg12", "avg23", "avg13")
+    
+      names(referee_df_1) = sprintf("%s coeff %d", names, rep)
+      
+      
+    
+      result_df <- cbind(result_df, data.frame(referee_df_1))
+    } else if (rep == 2){
+      referee_df_1 <- cbind(referee_df_1, data.frame(three_fourth_1))
+    } else if (rep == 3){
+      referee_df_1 <- cbind(referee_df_1, data.frame(three_fourth_2))
+    } else if (rep == 4){
+      referee_df_1 <- cbind(referee_df_1, data.frame(three_fourth_3))
+    } else if (rep == 5){
+      referee_df_1 <- cbind(referee_df_1, data.frame(one_sixth))
+    }
+    # names = c("t1", "i1", "u1", "val1", "t2", "i2", "u2", "val2", "t3", "i3", "u3", "val3", "avg", "v")
+    # 
+    # names(referee_df_1) = sprintf("%s coeff %d", names, rep)
+    # 
+    # result_df <- cbind(result_df, data.frame(referee_df_1))
+  
+  }
+  result_df[1] = NULL
+  July2 <<- cbind(July2, result_df)
+  View(result_df)
+
+  # 
+  #write.csv(result_df, file="result_df.csv")
+  
+  #below code adds in the values of t and i for the referees
+  #new_third_df = data.frame(one_third, result_df$u1.coeff.1, result_df$u2.coeff.1, result_df$u3.coeff.1, result_df$avg.coeff.1, (result_df$u1.coeff.1 + result_df$u2.coeff.1)/2, result_df$val1.coeff.1, result_df$val2.coeff.1, result_df$val3.coeff.1)
+  #names(new_third_df) = c("v", "u1", "u2", "u3", "avg", "avg12", "val1", "val2", "val3")
+  
+  #sample for one-third - first set of coefficients
+  new_third_df = data.frame(one_third, result_df$u1.coeff.1, result_df$u2.coeff.1, result_df$u3.coeff.1, result_df$avg.coeff.1, (result_df$u1.coeff.1 + result_df$u2.coeff.1)/2, (result_df$u2.coeff.1 + result_df$u3.coeff.1)/2, (result_df$u1.coeff.1 + result_df$u3.coeff.1)/2)
+  #new_third_df = data.frame(three_fourth_1, result_df$u1.coeff.2, result_df$u2.coeff.2, result_df$u3.coeff.2, result_df$avg.coeff.2, (result_df$u1.coeff.2 + result_df$u2.coeff.2)/2)
+  #new_third_df = data.frame(three_fourth_2, result_df$u1.coeff.3, result_df$u2.coeff.3, result_df$u3.coeff.3, result_df$avg.coeff.3, (result_df$u1.coeff.3 + result_df$u2.coeff.3)/2)
+  #new_third_df = data.frame(three_fourth_3, result_df$u1.coeff.4, result_df$u2.coeff.4, result_df$u3.coeff.4, result_df$avg.coeff.4, (result_df$u1.coeff.4 + result_df$u2.coeff.4)/2)
+  #new_third_df = data.frame(one_sixth, result_df$u1.coeff.5, result_df$u2.coeff.5, result_df$u3.coeff.5, result_df$avg.coeff.5, (result_df$u1.coeff.5 + result_df$u2.coeff.5)/2)
+  names(new_third_df) = c("v", "u1", "u2", "u3", "avg", "avg12", "avg23", "avg13")
+  #View(new_third_df)
+  # write.csv(new_third_df, file="third_df.csv")
+  # 
+  #begins color analysis portion of the simulation
+  
+  getTopPapers <- function (input_column){
+    avg_dict = data.frame((1:100),input_column)
+    names(avg_dict) = c("paper", "value")
+    return(head(avg_dict[order(-avg_dict[["value"]]),],15))
+  }
+  
+  avg_ordered = getTopPapers(new_third_df$avg)
+  avg12_ordered = getTopPapers(new_third_df$avg12)
+  avg23_ordered = getTopPapers(new_third_df$avg23)
+  avg13_ordered = getTopPapers(new_third_df$avg13)
+  avg1_ordered = getTopPapers(new_third_df$u1)
+  avg2_ordered = getTopPapers(new_third_df$u2)
+  avg3_ordered = getTopPapers(new_third_df$u3)
+  
+  View(new_third_df)
+  #avg_ordered = sort(new_third_df$avg, decreasing=TRUE)[1:15]
+  # avg12_ordered = sort(new_third_df$avg12, decreasing=TRUE)[1:15]
+  # avg1_ordered = sort(new_third_df$u1, decreasing=TRUE)[1:15]
+  # avg2_ordered = sort(new_third_df$u2, decreasing=TRUE)[1:15]
+  # avg3_ordered = sort(new_third_df$u3, decreasing=TRUE)[1:15]
+  #View(avg23_ordered)
+  
+  newdata <- head(new_third_df[order(-new_third_df$v),],15) #takes top 5 v values
+  newdata$papers <- rownames(newdata)
+  View(newdata)
+  color_col = c()
+  avg_counter = 0
+  avg_counter1 = 0 #counts those in top 10 but not top 5
+  avg_counter2 = 0 
+  
+  finaldata <- c("TOP 5", "TOP 10", "TOP 15")
+  
+  starcols <- data.frame(c(1:15))
+  calculateTop <- function (ideal_column, result_column){
+    counter = 0
+    counter1 = 0
+    counter2 = 0
+    for(r in 1:5) {
+      if (ideal_column[r] %in% result_column[1:5]) { #checks if the top 5 values' avg are also top ranked in avg column when sorted by itself
+      #color_col = c(color_col, "***")
+      counter = counter + 1
+      }
+    }
+    for(r in 1:10) {
+      if (ideal_column[r] %in% result_column[1:10]) {
+      #color_col = c(color_col, "**")
+      counter1 = counter1 + 1
+      } 
+    }
+    for(r in 1:15) {
+      if (ideal_column[r] %in% result_column[1:15]) {
+      #color_col = c(color_col, "*")
+      counter2 = counter2 + 1
+      } 
+    }
+    #starcols <<- cbind(starcols, color_col)
+    return(data.frame(c(counter, counter1, counter2)))
+
+  }
+  
+  #starcols <- data.frame(c(1:15))
+  calculateStar <- function (result_column){
+    ideal_column <- newdata$papers
+    color_col = c()
+    for(r in 1:15) {
+      if (result_column[r] %in% ideal_column[1:5]) { #checks if the top 5 values' avg are also top ranked in avg column when sorted by itself
+        color_col = c(color_col, "***")
+      } else if (result_column[r] %in% ideal_column[1:10]){
+        color_col = c(color_col, "**")
+      } else if (result_column[r] %in% ideal_column[1:15]){
+        color_col = c(color_col, "*")
+      } else {
+        color_col = c(color_col, "")
+      }
+    }
+    
+
+    return(color_col)
+
+  }
+  finaldata <- cbind(finaldata, calculateTop(newdata$avg, avg_ordered$value))
+  finaldata <- cbind(finaldata, calculateTop(newdata$avg12, avg12_ordered$value))
+  finaldata <- cbind(finaldata, calculateTop(newdata$u1, avg1_ordered$value))
+  finaldata <- cbind(finaldata, calculateTop(newdata$u2, avg2_ordered$value))
+  finaldata <- cbind(finaldata, calculateTop(newdata$u3, avg3_ordered$value))
+  
+  #View(calculateStar(newdata$avg, avg_ordered$value))
+  #names(starcols) <- c("1", "2", "3", "4", "5")
+  July3 <<- cbind(July3, newdata$papers)
+  July3 <<- cbind(July3, newdata$v)
+  July3 <<- cbind(July3, avg1_ordered)
+  July3 <<- cbind(July3, data.frame(calculateStar(avg1_ordered$paper)))
+  July3 <<- cbind(July3, avg2_ordered)
+  July3 <<- cbind(July3, data.frame(calculateStar(avg2_ordered$paper)))
+  July3 <<- cbind(July3, avg3_ordered)
+  July3 <<- cbind(July3, data.frame(calculateStar(avg3_ordered$paper)))
+  July3 <<- cbind(July3, avg_ordered)
+  July3 <<- cbind(July3, data.frame(calculateStar(avg_ordered$paper)))
+  July3 <<- cbind(July3, avg12_ordered)
+  July3 <<- cbind(July3, data.frame(calculateStar(avg12_ordered$paper)))
+  July3 <<- cbind(July3, avg23_ordered)
+  July3 <<- cbind(July3, data.frame(calculateStar(avg23_ordered$paper)))
+  July3 <<- cbind(July3, avg13_ordered)
+  July3 <<- cbind(July3, data.frame(calculateStar(avg13_ordered$paper)))
+  
+  
+  # names(July3) = c("blank", "Paper", "Value of Ref 1", "Star", "Paper", "Value of Ref 2", "Star", "Paper", "Value of Ref 3", "Star", "Paper", "Value of Avg", "Star", "Paper", "Value of Avg12", "Star", "Paper", "Value of Avg23", "Star", "Paper", "Value of Avg13", "Star")
+  # View(July3)
+  #adds green or ** count at end 
+  # newdata <- cbind(newdata, data.frame(c(avg_counter, rep("", 4))))
+  # newdata <- cbind(newdata, data.frame(c(avg12_counter, rep("", 4))))
+  # newdata <- cbind(newdata, data.frame(c(avg1_counter, rep("", 4))))
+  # newdata <- cbind(newdata, data.frame(c(avg2_counter, rep("", 4))))
+  # newdata <- cbind(newdata, data.frame(c(avg3_counter, rep("", 4))))
+
+  names(finaldata) = c("type", "Avg of 3", "Avg of 12", "Referee 1", "Referee 2", "Referee 3")
+  return(finaldata)
+  
+  # names(newdata) = c("v", "u1", "u2", "u3", "avg", "avg12", "color avg", "color avg12", "color u1", "color u2", "color u3", "count avg", "count avg12", "count u1", "count u2", "count u3")
+  # 
+  # newdata$v = round(newdata$v)
+  # newdata$avg = round(newdata$avg)
+  # newdata$avg12 = round(newdata$avg12)
+  # return(newdata)
+  
+  result_df[1] = NULL
+  result_df <- cbind(s_c_i, result_df)
+  # View(result_df)
+}
+
+#visualization codes
+color_result <- data.frame(matrix(ncol = 6, nrow = 0))
+set.seed(16) #random sample seed to control entire data generation
+color_seeds <- sample(1:300,10)
+View(color_seeds)
+for(i in 1:10){
+  color_result <- rbind(color_result, generate_table(color_seeds[i]))
+}
+color_result[1] = NULL
+top5 <- color_result[seq(1, nrow(color_result), by = 3),] 
+#row.names(top5) <- c(1:10)
+top10 <- color_result[seq(2, nrow(color_result), by = 3),] 
+top15 <- color_result[seq(3, nrow(color_result), by = 3),] 
+#row.names(top10) <- c(1:10)
+space <- c(rep("",6))
+color_result <- rbind(top5, space, space, top10, space, space, top15)
+rownames(color_result) = NULL
+View(color_result)
+write.csv(color_result, file="Frequency by Committee.csv")
+
+View(July2)
+write.csv(July2, file="Summary of Data.csv")
+
+View(July3)
+write.csv(July3, file="Top Values by Committee.csv")
+hist(one_third, breaks=20)
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
